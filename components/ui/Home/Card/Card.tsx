@@ -7,9 +7,9 @@ import { ProductsService } from "@/services/products/products.service";
 import { useRouter } from "next/router";
 
 export const Card: FC<{ product: IProduct; method: boolean }> = ({
-                                                                     product,
-                                                                     method
-                                                                 }) => {
+    product,
+    method
+}) => {
     const { _id, price, title, images } = product;
     const router = useRouter();
 
