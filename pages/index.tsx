@@ -55,7 +55,11 @@ const HomePage = () => {
                             }
                         >
                             {data.map(product => (
-                                <Card key={product._id} product={product} />
+                                <Card
+                                    key={product._id}
+                                    product={product}
+                                    method={false}
+                                />
                             ))}
                         </div>
                     ) : (
