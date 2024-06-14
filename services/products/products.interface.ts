@@ -1,3 +1,5 @@
+import { ITech } from "@/services/tech/tech.interface";
+
 export interface IProduct {
     // id
     _id: string;
@@ -17,6 +19,7 @@ export interface IProduct {
     seller: string;
     // Рейтинг
     rating: number;
+    techProcesses: string[];
 }
 
 export interface ICreateProductResponse {
@@ -32,6 +35,7 @@ export interface ICreateProductResponse {
     images: string[];
     // Тип товара(По этому типу будет фильтрация)
     type: string;
+    techProcesses: string[];
 }
 
 export type TypeDataFilters = {

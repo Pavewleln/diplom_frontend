@@ -5,6 +5,7 @@ import { ProductsService } from "@/services/products/products.service";
 import { SubmitHandler, useForm, useFormState } from "react-hook-form";
 import { TextField } from "@/components/ui/Form-components/TextField";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { TechProcessService } from "@/services/tech/tech.service";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Back } from "@/components/ui/Back";
@@ -20,25 +21,44 @@ import {
     typeValidation
 } from "@/utils/validation";
 import axios from "axios";
+import { ITech } from "@/services/tech/tech.interface";
 
 const Create = () => {
     const [drag, setDrag] = useState(false);
     const [files, setFiles] = useState<string[]>([]);
+    const [tech, setTech] = useState<ITech[]>([]);
+    console.log(tech);
     const queryClient = useQueryClient();
-    const { back } = useRouter();
+    const router = useRouter();
     const { user } = useAuth();
     useEffect(() => {
         if (user?.isAdmin === false) {
-            back();
+            router.back();
             toast.error("Вы не продавец");
         }
+    }, [user, router]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await TechProcessService.get();
+                setTech(response.data); // Extract the data from the AxiosResponse
+            } catch (error) {
+                console.error("Failed to fetch tech processes", error);
+                toast.error("Ошибка при получении процессов");
+            }
+        };
+        fetchData();
     }, [user]);
+
     const createProduct = useMutation(
         (newProduct: ICreateProductResponse) =>
             ProductsService.create(newProduct),
-        { onSuccess: () => queryClient.invalidateQueries(["get all products"]) }
+        {
+            onSuccess: () => queryClient.invalidateQueries(["get all products"])
+        }
     );
-    // настройка
+
     const {
         handleSubmit,
         control,
@@ -51,7 +71,8 @@ const Create = () => {
             price: 0,
             title: "",
             kol: 0,
-            images: files
+            images: files,
+            techProcesses: []
         },
         mode: "onChange"
     });
@@ -60,7 +81,7 @@ const Create = () => {
         reset({
             images: files
         });
-    }, [files]);
+    }, [files, reset]);
 
     const { errors } = useFormState({
         control
@@ -73,9 +94,9 @@ const Create = () => {
     const handleChangeFiles = async (event: ChangeEvent<HTMLInputElement>) => {
         try {
             if (event.target.files) {
-                const files = Array.from(event.target.files);
+                const filesArray = Array.from(event.target.files);
                 const urls: string[] = [];
-                for (const file of files) {
+                for (const file of filesArray) {
                     const formData = new FormData();
                     formData.append("images", file);
                     const { data } = await axios.post(
@@ -91,26 +112,23 @@ const Create = () => {
         }
     };
 
-    // eslint-disable-next-line
-    const dragStartHandler = (e: any) => {
+    const dragStartHandler = (e: React.DragEvent) => {
         e.preventDefault();
         setDrag(true);
     };
 
-    // eslint-disable-next-line
-    const dragLeaveHandler = (e: any) => {
+    const dragLeaveHandler = (e: React.DragEvent) => {
         e.preventDefault();
         setDrag(false);
     };
 
-    // eslint-disable-next-line
-    const onDrag = async (event: any) => {
+    const onDrag = async (event: React.DragEvent) => {
         event.preventDefault();
         try {
             if (event.dataTransfer.files) {
-                const files = [...event.dataTransfer.files];
+                const filesArray = Array.from(event.dataTransfer.files);
                 const urls: string[] = [];
-                for (const file of files) {
+                for (const file of filesArray) {
                     const formData = new FormData();
                     formData.append("images", file);
                     const { data } = await axios.post(
@@ -144,11 +162,11 @@ const Create = () => {
                 price: 0,
                 title: "",
                 kol: 0,
-                images: files
+                images: [],
+                techProcesses: []
             });
         }
     };
-
     return (
         <MainLayout title={"Создать свой продукт"}>
             <Back />
@@ -160,7 +178,7 @@ const Create = () => {
                         </h2>
                         <form
                             onSubmit={handleSubmit(onSubmit)}
-                            className={"flex justify-around"}
+                            className="flex justify-around"
                         >
                             <div>
                                 <label
@@ -171,10 +189,10 @@ const Create = () => {
                                 </label>
                                 <div
                                     className="flex items-center justify-center"
-                                    onDragStart={e => dragStartHandler(e)}
-                                    onDragLeave={e => dragLeaveHandler(e)}
-                                    onDragOver={e => dragStartHandler(e)}
-                                    onDrop={e => onDrag(e)}
+                                    onDragStart={dragStartHandler}
+                                    onDragLeave={dragLeaveHandler}
+                                    onDragOver={dragStartHandler}
+                                    onDrop={onDrag}
                                 >
                                     <label
                                         htmlFor="dropzone-file"
@@ -232,9 +250,7 @@ const Create = () => {
                                                 key={index}
                                                 src={file}
                                                 alt={file}
-                                                className={
-                                                    "img-thumbnail rounded-lg border p-2 w-24 h-24 m-1 cursor-pointer hover:bg-red-100"
-                                                }
+                                                className="img-thumbnail rounded-lg border p-2 w-24 h-24 m-1 cursor-pointer hover:bg-red-100"
                                                 height={20}
                                                 width={20}
                                                 onClick={() => deleteFile(file)}
@@ -269,18 +285,6 @@ const Create = () => {
                                 </div>
                                 <div className="w-full">
                                     <TextField
-                                        id={"price"}
-                                        control={control}
-                                        label={"Цена"}
-                                        name={"price"}
-                                        type={"number"}
-                                        placeholder={"Цена"}
-                                        validation={priceValidation}
-                                        error={errors.price}
-                                    />
-                                </div>
-                                <div className="w-full">
-                                    <TextField
                                         id={"kol"}
                                         control={control}
                                         label={"Количество"}
@@ -291,23 +295,61 @@ const Create = () => {
                                         error={errors.kol}
                                     />
                                 </div>
-                                <div className="sm:col-span-2">
+                                <div className="w-full">
+                                    <TextField
+                                        id={"price"}
+                                        control={control}
+                                        label={"Цена"}
+                                        name={"price"}
+                                        type={"number"}
+                                        placeholder={"Цена"}
+                                        validation={priceValidation}
+                                        error={errors.price}
+                                    />
+                                </div>
+                                <div className="sm:col-span-2 w-full">
                                     <TextareaField
-                                        error={errors.description}
                                         id={"description"}
                                         control={control}
                                         label={"Описание"}
                                         name={"description"}
-                                        placeholder={"Не менее 10 символов"}
+                                        placeholder={"Описание"}
                                         validation={descriptionValidation}
+                                        error={errors.description}
                                     />
                                 </div>
-                                <div className={"w-[100px] m-2"}>
-                                    <ButtonForm
-                                        label={"Создать"}
-                                        isValid={isValid}
-                                    />
-                                </div>
+                                {/*{tech && (*/}
+                                {/*    <div className="w-full">*/}
+                                {/*        <label*/}
+                                {/*            htmlFor="countries"*/}
+                                {/*            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"*/}
+                                {/*        >*/}
+                                {/*            Выберите процессы*/}
+                                {/*        </label>*/}
+                                {/*        <select*/}
+                                {/*            multiple*/}
+                                {/*            id="countries"*/}
+                                {/*            {...control.register(*/}
+                                {/*                "techProcesses"*/}
+                                {/*            )}*/}
+                                {/*            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"*/}
+                                {/*        >*/}
+                                {/*            {tech.map(option => (*/}
+                                {/*                <option*/}
+                                {/*                    key={option._id}*/}
+                                {/*                    value={option.name}*/}
+                                {/*                    className="bg-white text-gray-900"*/}
+                                {/*                >*/}
+                                {/*                    {option.description}*/}
+                                {/*                </option>*/}
+                                {/*            ))}*/}
+                                {/*        </select>*/}
+                                {/*    </div>*/}
+                                {/*)}*/}
+                                <ButtonForm
+                                    label={"Создать"}
+                                    isValid={isValid}
+                                />
                             </div>
                         </form>
                     </div>
@@ -316,4 +358,5 @@ const Create = () => {
         </MainLayout>
     );
 };
+
 export default Create;

@@ -1,22 +1,51 @@
 import { ProductsService } from "@/services/products/products.service";
+import { TechProcessService } from "@/services/tech/tech.service"; // Импортируем сервис для техпроцессов
 import { Comments } from "@/components/ui/FullInfoProduct/Comments";
 import { IProduct } from "@/services/products/products.interface";
+import { ITech } from "@/services/tech/tech.interface";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { formatPrice } from "@/utils/formatPrice";
 import { classNames } from "@/utils/classNames";
 import { Back } from "@/components/ui/Back";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const Product = ({ data }: { data: IProduct }) => {
     const [tab, setTab] = useState(0);
+    const [activeTab, setActiveTab] = useState(0);
+    const [techProcesses, setTechProcesses] = useState<ITech[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTechProcesses = async () => {
+            try {
+                const responses = await Promise.all(
+                    data.techProcesses.map(value =>
+                        TechProcessService.getById(value)
+                    )
+                );
+                const fetchedTechProcesses = responses.map(
+                    response => response.data
+                );
+                setTechProcesses(fetchedTechProcesses);
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTechProcesses();
+    }, [data.techProcesses]);
 
     const isActive = (index: number) => {
-        if (tab === index) return " active";
+        if (activeTab === index) return " active";
         return "";
     };
+
     const { description, price, title, images, type, _id } = data;
+
     return (
         <MainLayout title={data ? data.title : ""}>
             <Back />
@@ -94,6 +123,73 @@ const Product = ({ data }: { data: IProduct }) => {
                             </Link>
                         </div>
                     </section>
+                    <section className={"max-w-[1200px] mx-auto"}>
+                        <div id="accordion-collapse" data-accordion="collapse">
+                            {loading ? (
+                                <p></p>
+                            ) : (
+                                techProcesses.map((process, index) => (
+                                    <div key={process._id}>
+                                        <h2
+                                            id={`accordion-collapse-heading-${index}`}
+                                        >
+                                            <button
+                                                type="button"
+                                                className={`flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 ${
+                                                    index === 0
+                                                        ? "rounded-t-xl"
+                                                        : ""
+                                                } focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3`}
+                                                data-accordion-target={`#accordion-collapse-body-${index}`}
+                                                aria-expanded={
+                                                    index === 0
+                                                        ? "true"
+                                                        : "false"
+                                                }
+                                                aria-controls={`accordion-collapse-body-${index}`}
+                                                onClick={() =>
+                                                    setActiveTab(index)
+                                                }
+                                            >
+                                                <span>{process.name}</span>
+                                                <svg
+                                                    data-accordion-icon=""
+                                                    className={`w-3 h-3 ${
+                                                        isActive(index)
+                                                            ? "rotate-180"
+                                                            : ""
+                                                    } shrink-0`}
+                                                    aria-hidden="true"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 10 6"
+                                                >
+                                                    <path
+                                                        stroke="currentColor"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth="2"
+                                                        d="M9 5 5 1 1 5"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </h2>
+                                        <div
+                                            id={`accordion-collapse-body-${index}`}
+                                            className={`p-5 border border-b-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900 ${
+                                                isActive(index) ? "" : "hidden"
+                                            }`}
+                                            aria-labelledby={`accordion-collapse-heading-${index}`}
+                                        >
+                                            <p className="text-gray-500 dark:text-gray-400">
+                                                {process.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </section>
                     <Comments productId={_id} />
                 </>
             ) : (
@@ -102,6 +198,7 @@ const Product = ({ data }: { data: IProduct }) => {
         </MainLayout>
     );
 };
+
 export const getServerSideProps = async ({
     query
 }: {
@@ -114,6 +211,10 @@ export const getServerSideProps = async ({
         };
     } catch (err) {
         console.log(err);
+        return {
+            props: { data: null }
+        };
     }
 };
+
 export default Product;

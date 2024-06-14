@@ -31,8 +31,8 @@ export const passwordValidation = {
 export const nameValidation = {
     required: REQUIRED_FIELD,
     validate: (value: string) => {
-        if (value.length > 15) {
-            return "Имя должно быть короче 15 символов";
+        if (value.length > 30) {
+            return "Имя должно быть короче 30 символов";
         }
         if (value.length < 3) {
             return "Имя должно быть длинее 3 символов";
@@ -43,8 +43,8 @@ export const nameValidation = {
 export const surnameValidation = {
     required: REQUIRED_FIELD,
     validate: (value: string) => {
-        if (value.length > 15) {
-            return "Имя должно быть короче 15 символов";
+        if (value.length > 30) {
+            return "Имя должно быть короче 30 символов";
         }
         if (value.length < 3) {
             return "Имя должно быть длинее 3 символов";
@@ -55,8 +55,8 @@ export const surnameValidation = {
 export const titleValidation = {
     required: REQUIRED_FIELD,
     validate: (value: string) => {
-        if (value.length > 15) {
-            return "Название должно быть короче 15 символов";
+        if (value.length > 30) {
+            return "Название должно быть короче 30 символов";
         }
         if (value.length < 3) {
             return "Название должно быть длинее 3 символов";
@@ -67,8 +67,8 @@ export const titleValidation = {
 export const typeValidation = {
     required: REQUIRED_FIELD,
     validate: (value: string) => {
-        if (value.length > 15) {
-            return "Название должно быть короче 15 символов";
+        if (value.length > 30) {
+            return "Название должно быть короче 30 символов";
         }
         if (value.length < 3) {
             return "Название должно быть длинее 3 символов";
@@ -82,8 +82,8 @@ export const descriptionValidation = {
         if (value.length < 10) {
             return "Название должно быть длинее 10 символов";
         }
-        if (value.length > 150) {
-            return "Название должно быть короче 150 символов";
+        if (value.length > 1000) {
+            return "Название должно быть короче 1000 символов";
         }
         return true;
     }
@@ -94,8 +94,8 @@ export const priceValidation = {
         if (value <= 0) {
             return "Цена не может равняться 0";
         }
-        if (value >= 5_000_000) {
-            return "Цена не должна превышать 1 000 000";
+        if (value >= 10_000_000) {
+            return "Цена не должна превышать 10 000 000";
         }
         return true;
     }

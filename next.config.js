@@ -2,7 +2,7 @@
 const nextConfig = {
     reactStrictMode: false,
     env: {
-        SERVER_URL: "https://diplom-backend-lzeb.onrender.com/"
+        SERVER_URL: "http://localhost:4000/"
     }
 };
 
