@@ -3,7 +3,7 @@ import { ITech } from "@/services/tech/tech.interface";
 
 export const TechProcessService = {
     async get() {
-        return await instance<string[]>({
+        return await instance<ITech[]>({
             url: "tech",
             method: "GET"
         });

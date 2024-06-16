@@ -27,6 +27,7 @@ const Create = () => {
     const [drag, setDrag] = useState(false);
     const [files, setFiles] = useState<string[]>([]);
     const [tech, setTech] = useState<ITech[]>([]);
+    const [techProcesses, setTechProcesses] = useState<string[]>([]);
     console.log(tech);
     const queryClient = useQueryClient();
     const router = useRouter();
@@ -42,7 +43,7 @@ const Create = () => {
         const fetchData = async () => {
             try {
                 const response = await TechProcessService.get();
-                setTech(response.data); // Extract the data from the AxiosResponse
+                setTech(response.data);
             } catch (error) {
                 console.error("Failed to fetch tech processes", error);
                 toast.error("Ошибка при получении процессов");
@@ -144,12 +145,26 @@ const Create = () => {
         }
     };
 
+    const handleTechProcessChange = (id: string) => {
+        setTechProcesses(prevTechProcesses => {
+            if (prevTechProcesses.includes(id)) {
+                return prevTechProcesses.filter(item => item !== id);
+            } else {
+                return [...prevTechProcesses, id];
+            }
+        });
+        console.log(techProcesses);
+    };
+
     const onSubmit: SubmitHandler<
         ICreateProductResponse
     > = async createData => {
         try {
             if (user) {
-                await createProduct.mutate(createData);
+                createProduct.mutate({
+                    ...createData,
+                    techProcesses: techProcesses
+                });
                 toast.success("Продукт успешно создан");
             }
         } catch (err) {
@@ -165,6 +180,7 @@ const Create = () => {
                 images: [],
                 techProcesses: []
             });
+            setTechProcesses([]); // очищаем выбранные элементы после отправки формы
         }
     };
     return (
@@ -318,34 +334,28 @@ const Create = () => {
                                         error={errors.description}
                                     />
                                 </div>
-                                {/*{tech && (*/}
-                                {/*    <div className="w-full">*/}
-                                {/*        <label*/}
-                                {/*            htmlFor="countries"*/}
-                                {/*            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"*/}
-                                {/*        >*/}
-                                {/*            Выберите процессы*/}
-                                {/*        </label>*/}
-                                {/*        <select*/}
-                                {/*            multiple*/}
-                                {/*            id="countries"*/}
-                                {/*            {...control.register(*/}
-                                {/*                "techProcesses"*/}
-                                {/*            )}*/}
-                                {/*            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"*/}
-                                {/*        >*/}
-                                {/*            {tech.map(option => (*/}
-                                {/*                <option*/}
-                                {/*                    key={option._id}*/}
-                                {/*                    value={option.name}*/}
-                                {/*                    className="bg-white text-gray-900"*/}
-                                {/*                >*/}
-                                {/*                    {option.description}*/}
-                                {/*                </option>*/}
-                                {/*            ))}*/}
-                                {/*        </select>*/}
-                                {/*    </div>*/}
-                                {/*)}*/}
+                                {tech.map(option => (
+                                    <div key={option._id}>
+                                        <input
+                                            type="checkbox"
+                                            id={option._id}
+                                            value={option._id}
+                                            onChange={() =>
+                                                handleTechProcessChange(
+                                                    option._id
+                                                )
+                                            }
+                                            checked={techProcesses.includes(
+                                                option._id
+                                            )}
+                                            className="mr-2"
+                                        />
+                                        <label htmlFor={option._id}>
+                                            {option.description}
+                                        </label>
+                                    </div>
+                                ))}
+
                                 <ButtonForm
                                     label={"Создать"}
                                     isValid={isValid}
